@@ -229,4 +229,101 @@ Load checks
 ## 14) Observability and operations
 
 * Structured server logs include room id and client counts on connect and disconnect
-* Health route returns up status and
+* Health route returns up status and open room count
+* Basic dashboard can show active rooms and total connected clients
+
+Troubleshooting
+
+* If latency spikes, check presence update frequency and stroke point density
+* If memory grows unbounded, enable snapshot compaction and prune idle rooms
+* If users cannot connect, verify token validity and server time skew
+
+## 15) Risks and mitigations
+
+* Giant strokes inflate payloads: cap maximum points per stroke and segment long strokes
+* Excess presence spam increases bandwidth: throttle cursor updates to a small rate
+* Database file corruption on crash: use frequent snapshots once P1 lands and back up the file
+* Cross region lag: prefer region affinity for clients by deploying servers per region
+
+## 16) Team ownership (3 people)
+
+Frontend lead
+
+* Canvas rendering, input handling, toolbar, presence cursors, accessibility
+
+Sync and backend lead
+
+* WebSocket server, authentication, persistence, health route, logs
+
+Infra and QA lead
+
+* Containerization, reverse proxy, environment configuration, E2E tests, load checks
+
+Shared
+
+* Undo and redo, performance tuning, bug triage
+
+## 17) Acceptance criteria
+
+* Two users can see each other’s cursors and draw with visible updates under the latency targets
+* Board state survives a server restart without any manual recovery steps
+* Offline edits merge deterministically with no lost strokes
+* Undo and redo operate only on the user’s own strokes
+* Basic security is in place with signed tokens and room scoping
+* Project runs with one command in a container environment
+
+## 18) P0 build checklist
+
+Client
+
+* Canvas rendering loop with stroke smoothing
+* Input sampling with distance threshold
+* Toolbar for pen and eraser, color, size
+* Presence cursors with name and color
+* Local undo and redo stack per user
+* Room id routing and token handling
+
+Server
+
+* WebSocket sync server with room‑scoped authentication
+* Persistence of document updates to a local database file
+* Health route and structured logs
+
+Infra
+
+* Container image build
+* Reverse proxy template for TLS
+* Environment variable templates
+
+## 19) P1 and P2 checklists
+
+P1
+
+* Shapes and text labels with bounding boxes
+* Zoom and pan with a transform matrix on the renderer
+* Export current viewport as PNG and full board as SVG
+* Read‑only guests, owner‑only write
+* Snapshot compaction job
+
+P2
+
+* Multi‑page boards with simple pagination
+* Replay timeline that scrubs through stroke timestamps
+* Peer to peer transport as an option when clients are on the same network
+
+## 20) Naming conventions
+
+* Room ids are short url‑safe strings
+* User ids are opaque numeric or random values, not emails
+* Colors are hex strings in six digits
+
+## 21) License and credits
+
+* CRDT and presence powered by widely used open source libraries
+* Freehand stroke smoothing powered by an established open source algorithm
+
+## 22) Open questions
+
+* Should we limit maximum concurrent users per room to protect performance
+* Do we need server side rate limits for abuse prevention
+* Do we need light persistence encryption at rest for hosted demos
